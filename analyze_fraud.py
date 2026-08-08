@@ -38,7 +38,8 @@ def summarize_results(scored: pd.DataFrame, chargebacks: pd.DataFrame) -> pd.Dat
         .sort_values("risk_label")
     )
 
-    known_fraud = scored.merge(chargebacks[["transaction_id"]], on="transaction_id", how="left", indicator=True)
+    chargeback_ids = chargebacks[["transaction_id"]].drop_duplicates()
+    known_fraud = scored.merge(chargeback_ids, on="transaction_id", how="left", indicator=True)
     known_fraud["is_chargeback"] = (known_fraud["_merge"] == "both").astype(int)
 
     fraud_by_label = (

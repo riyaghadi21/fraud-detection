@@ -7,6 +7,13 @@ def test_label_risk_thresholds():
     assert label_risk(75) == "high"
 
 
+def test_label_risk_boundaries():
+    assert label_risk(29) == "low"
+    assert label_risk(30) == "medium"
+    assert label_risk(59) == "medium"
+    assert label_risk(60) == "high"
+
+
 def test_large_amount_adds_risk():
     tx = {
         "device_risk_score": 10,
@@ -54,6 +61,23 @@ def test_prior_chargebacks_increase_score():
     none = score_transaction(base_tx(prior_chargebacks=0))
     many = score_transaction(base_tx(prior_chargebacks=2))
     assert many > none
+
+
+def test_score_is_clamped_to_valid_range():
+    lowest = score_transaction(base_tx())
+    highest = score_transaction(
+        base_tx(
+            device_risk_score=90,
+            is_international=1,
+            amount_usd=5000,
+            velocity_24h=10,
+            failed_logins_24h=10,
+            prior_chargebacks=5,
+        )
+    )
+    assert 0 <= lowest <= 100
+    assert 0 <= highest <= 100
+    assert highest == 100
 
 
 def test_known_fraud_pattern_scores_high():
